@@ -14,18 +14,21 @@ def get_last_page():
 def extract_job(html):
     title = html.find("h2", {"class" : "fs-body3"}).get_text(strip=True) #strip=True을 써서 여백을 없애주자
     company, location = html.find("h3", {"class":"fs-body1"}).find_all("span", recursive=False) #recursive=False는 첫 단계의 span만 가져온다.
-    print(company.get_text(strip=True), location.get_text(strip=True))
-    return {'title':title}
+    company = company.get_text(strip=True)
+    location = location.get_text(strip=True).strip("-").strip(" \r").strip("\n")
+    job_id = html["data-jobid"]
+    return {'title':title, 'company':company,'location':location,"link": f"https://stackoverflow.com/jobs/{job_id}"}
 
 def extract_jobs(last_page):
     jobs = []
-    #for page in range(last_page): #range는 인자로 integer만 쓸수 있다
-    result = requests.get(f"{URL}&pg={0+1}")
-    soup = BeautifulSoup(result.text, "html.parser")
-    results = soup.find_all("div", {"class":"-job"})
-    for result in results:
-        job = extract_job(result)
-        jobs.append(job)
+    for page in range(last_page): #range는 인자로 integer만 쓸수 있다
+        print(f"Scrapping StackOverflow: Page: {page}")
+        result = requests.get(f"{URL}&pg={page + 1}")
+        soup = BeautifulSoup(result.text, "html.parser")
+        results = soup.find_all("div", {"class":"-job"})
+        for result in results:
+            job = extract_job(result)
+            jobs.append(job)
     return jobs
 
 def get_jobs():
